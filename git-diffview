@@ -6,21 +6,33 @@ usage() {
 
 main() {
     case $# in
-        0) from="HEAD~"; to="HEAD" ;;
-        1) if [ $1 == "-h" ] ; then
-               usage; exit 0
-           fi
-           from=$1; to="HEAD" ;;
-        2) from=$1; to=$2 ;;
-        *) usage; exit 1;;
+        0)
+            from="HEAD~"; to="HEAD"
+            ;;
+        1)
+            if [ $1 == "-h" || $1 == "--help" || $1 == "-?" ] ; then
+                usage; exit 0
+            fi
+            from=$1; to="HEAD"
+            shift
+            ;;
+        2)
+            from=$1; to=$2
+            shift
+            shift
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
     esac
 
     temp_dir=$(mktemp -d)
 
     git diff --name-status $from $to | {
         while read name ; do
-            status=$(echo "$name" | awk '{print $1}')
-            filename=$(echo "$name" | awk '{$1=""; sub(/^  */,"", $0); print }')
+            status=$(awk '{print $1}' <<< "$name" )
+            filename=$(awk '{$1=""; sub(/^  */,"", $0); print }' <<< "$name")
 
             mkdir -p "$temp_dir/$filename $status"
         done
